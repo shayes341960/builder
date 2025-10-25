@@ -4,8 +4,9 @@ import os
 import re
 import shutil
 import socket
+from ipaddress import ip_address
 import subprocess
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from os.path import join
 from urllib.parse import unquote, urlparse
 
@@ -35,7 +36,7 @@ class BlockDataKey:
 
 class Block:
 	blockId: str = ""
-	children: list["Block"] = None
+	children: list["Block"] | None = None
 	baseStyles: dict = None
 	rawStyles: dict = None
 	mobileStyles: dict = None
@@ -60,8 +61,17 @@ class Block:
 	def __init__(self, **kwargs) -> None:
 		for key, value in kwargs.items():
 			if key == "children":
-				value = [Block(**b) if b and isinstance(b, dict) else None for b in (value or [])]
+				value = [
+					Block(**child) if isinstance(child, dict) else child
+					for child in (value or [])
+					if child is not None
+				]
+			elif key == "dataKey" and value and isinstance(value, dict):
+				value = BlockDataKey(**value)
 			setattr(self, key, value)
+
+		if self.children is None:
+			self.children = []
 
 	def as_dict(self):
 		return {
@@ -73,7 +83,7 @@ class Block:
 			"tabletStyles": self.tabletStyles,
 			"attributes": self.attributes,
 			"classes": self.classes,
-			"dataKey": self.dataKey,
+			"dataKey": asdict(self.dataKey) if isinstance(self.dataKey, BlockDataKey) else self.dataKey,
 			"blockName": self.blockName,
 			"element": self.element,
 			"draggable": self.draggable,
@@ -90,6 +100,7 @@ class Block:
 		}
 
 
+
 def get_doc_as_dict(doctype, name):
 	assert isinstance(doctype, str)
 	assert isinstance(name, str)
@@ -102,10 +113,41 @@ def get_cached_doc_as_dict(doctype, name):
 	return frappe.get_cached_doc(doctype, name).as_dict()
 
 
+def _is_private_network_host(hostname: str | None) -> bool:
+	"""Return True if the hostname resolves to a private or loopback address."""
+
+	if not hostname:
+		return True
+
+	try:
+		addresses = {info[4][0] for info in socket.getaddrinfo(hostname, None)}
+	except socket.gaierror:
+		# If the hostname cannot be resolved, fail closed and treat as unsafe.
+		return True
+
+	for address in addresses:
+		try:
+			ip = ip_address(address)
+		except ValueError:
+			# Skip non-IP addresses (e.g. UNIX sockets)
+			return True
+
+		if (
+			ip.is_private
+			or ip.is_loopback
+			or ip.is_reserved
+			or ip.is_unspecified
+			or ip.is_link_local
+		):
+			return True
+
+	return False
+
+
 def make_safe_get_request(url, **kwargs):
 	parsed = urlparse(url)
-	parsed_ip = socket.gethostbyname(parsed.hostname)
-	if parsed_ip.startswith("127", "10", "192", "172"):
+
+	if _is_private_network_host(parsed.hostname):
 		return
 
 	return frappe.integrations.utils.make_get_request(url, **kwargs)
@@ -299,7 +341,7 @@ def get_template_assets_folder_path(page_doc):
 
 
 def get_builder_page_preview_file_paths(page_doc):
-	public_path, public_path = None, None
+	public_path, local_path = None, None
 	if page_doc.is_template:
 		local_path = os.path.join(get_template_assets_folder_path(page_doc), "preview.webp")
 		public_path = f"/builder_assets/{page_doc.name}/preview.webp"
