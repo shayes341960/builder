@@ -24,14 +24,14 @@
 						: null,
 					padding: '40px',
 				}"
-				:style="{
-					left: `${
-						builderStore.showLeftPanel
-							? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
-							: 0
-					}px`,
-					right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
-				}"
+                                :style="{
+                                        left: `${
+                                                builderStore.showLeftPanel
+                                                        ? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
+                                                        : 0
+                                        }px`,
+                                        right: `${rightSidebarOffset}px`,
+                                }"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-2 p-10">
 				<template v-slot:header>
 					<div
@@ -60,18 +60,20 @@
 				:canvas-styles="{
 					minHeight: '1000px',
 				}"
-				:style="{
-					left: `${
-						builderStore.showLeftPanel
-							? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
-							: 0
-					}px`,
-					right: `${builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0}px`,
-				}"
+                                :style="{
+                                        left: `${
+                                                builderStore.showLeftPanel
+                                                        ? builderStore.builderLayout.leftPanelWidth + builderStore.builderLayout.optionsPanelWidth
+                                                        : 0
+                                        }px`,
+                                        right: `${rightSidebarOffset}px`,
+                                }"
 				class="canvas-container absolute bottom-0 top-[var(--toolbar-height)] flex justify-center overflow-hidden bg-surface-gray-1 p-10"></BuilderCanvas>
-			<BuilderRightPanel
-				v-show="builderStore.showRightPanel"
-				class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"></BuilderRightPanel>
+                        <BuilderRightPanel
+                                v-show="builderStore.showRightPanel"
+                                class="no-scrollbar absolute bottom-0 right-0 top-[var(--toolbar-height)] z-20 overflow-auto border-l-[1px] border-outline-gray-2 bg-surface-white"
+                                :style="{ right: builderStore.showAISidebar ? `${builderStore.aiSidebarWidth}px` : '0px' }"></BuilderRightPanel>
+                        <AIAssistantSidebar v-if="builderStore.showAISidebar"></AIAssistantSidebar>
 			<PageListModal v-model="pageListDialog" :pages="componentUsedInPages"></PageListModal>
 			<Dialog
 				style="z-index: 40"
@@ -105,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+import AIAssistantSidebar from "@/components/AIAssistantSidebar.vue";
 import BlockContextMenu from "@/components/BlockContextMenu.vue";
 import BuilderCanvas from "@/components/BuilderCanvas.vue";
 import BuilderLeftPanel from "@/components/BuilderLeftPanel.vue";
@@ -169,6 +172,11 @@ const notUsingInput = computed(
 );
 
 const blockContextMenu = toRef(builderStore, "blockContextMenu");
+const rightSidebarOffset = computed(
+        () =>
+                (builderStore.showRightPanel ? builderStore.builderLayout.rightPanelWidth : 0) +
+                (builderStore.showAISidebar ? builderStore.aiSidebarWidth : 0),
+);
 
 const { space } = useMagicKeys({
 	passive: false,

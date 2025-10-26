@@ -71,12 +71,22 @@
 				</template>
 			</Popover>
 		</div>
-		<!-- actions -->
-		<div class="absolute right-3 flex items-center gap-5">
-			<!-- show dark mode toggle -->
-			<Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
-				<FeatherIcon
-					:name="isDark ? 'sun' : 'moon'"
+                <!-- actions -->
+                <div class="absolute right-3 flex items-center gap-5">
+                        <Tooltip text="Toggle AI suggestions" :hoverDelay="0.6">
+                                <BuilderButton
+                                        variant="subtle"
+                                        class="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-ink-gray-7 hover:bg-surface-gray-2 data-[active='true']:bg-surface-gray-3 data-[active='true']:text-ink-gray-9"
+                                        :data-active="builderStore.showAISidebar"
+                                        @click="builderStore.showAISidebar = !builderStore.showAISidebar">
+                                        <span aria-hidden="true" class="text-base leading-none">✨</span>
+                                        <span>AI</span>
+                                </BuilderButton>
+                        </Tooltip>
+                        <!-- show dark mode toggle -->
+                        <Tooltip text="Toggle Dark Mode" :hoverDelay="0.6">
+                                <FeatherIcon
+                                        :name="isDark ? 'sun' : 'moon'"
 					class="h-4 w-4 cursor-pointer text-ink-gray-8 outline-none"
 					@click="() => transitionTheme(toggleDark)"></FeatherIcon>
 			</Tooltip>
