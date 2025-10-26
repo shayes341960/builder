@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AIAssistantSidebar: typeof import('./src/components/AIAssistantSidebar.vue')['default']
     AlertDialog: typeof import('./src/components/AlertDialog.vue')['default']
     AnalyticsFilters: typeof import('./src/components/Settings/AnalyticsFilters.vue')['default']
     AnalyticsOverview: typeof import('./src/components/Settings/AnalyticsOverview.vue')['default']
